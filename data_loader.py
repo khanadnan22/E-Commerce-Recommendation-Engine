@@ -11,9 +11,14 @@ Supports two dataset formats:
      https://www.kaggle.com/datasets/carrie1/ecommerce-data
      Columns: InvoiceNo, StockCode, Description, Quantity, InvoiceDate,
               UnitPrice, CustomerID, Country
+
+Dataset is auto-downloaded from Kaggle on first run using kagglehub.
+Requires a free Kaggle account — see https://www.kaggle.com/docs/api
 """
 
 import os
+import shutil
+import glob
 import pandas as pd
 import numpy as np
 
@@ -23,16 +28,71 @@ DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 PRODUCTS_CACHE = os.path.join(DATA_DIR, 'products_clean.csv')
 INTERACTIONS_CACHE = os.path.join(DATA_DIR, 'interactions_clean.csv')
 
+KAGGLE_DATASET = "saurav9786/amazon-product-reviews"
+
+
+def _download_dataset():
+    """
+    Auto-download the Amazon Electronics Ratings dataset from Kaggle
+    using kagglehub. Requires a free Kaggle account.
+
+    On first run, kagglehub will prompt for Kaggle credentials
+    (username + API key from https://www.kaggle.com/settings).
+    """
+    try:
+        import kagglehub
+    except ImportError:
+        raise ImportError(
+            "kagglehub is required to auto-download the dataset.\n"
+            "Install it with: pip install kagglehub\n"
+            "Or manually download from:\n"
+            "  https://www.kaggle.com/datasets/saurav9786/amazon-product-reviews\n"
+            "and place the CSV in the 'data/' folder."
+        )
+
+    print(f"[DataLoader] Downloading dataset from Kaggle: {KAGGLE_DATASET}")
+    print("[DataLoader] If prompted, enter your Kaggle credentials.")
+    print("[DataLoader] Get your API key from: https://www.kaggle.com/settings\n")
+
+    download_path = kagglehub.dataset_download(KAGGLE_DATASET)
+    print(f"[DataLoader] Downloaded to: {download_path}")
+
+    os.makedirs(DATA_DIR, exist_ok=True)
+
+    csv_files = glob.glob(os.path.join(download_path, "**", "*.csv"), recursive=True)
+    if not csv_files:
+        raise FileNotFoundError(
+            f"No CSV files found in downloaded dataset at {download_path}"
+        )
+
+    for csv_file in csv_files:
+        dest = os.path.join(DATA_DIR, os.path.basename(csv_file))
+        if not os.path.exists(dest):
+            shutil.copy2(csv_file, dest)
+            print(f"[DataLoader] Copied: {os.path.basename(csv_file)} → data/")
+
+    return True
+
 
 def _detect_raw_file():
-    """Auto-detect the raw CSV file inside the data/ directory."""
-    if not os.path.isdir(DATA_DIR):
-        return None
+    """Auto-detect the raw CSV file inside the data/ directory.
+    If no raw file is found, attempts to download from Kaggle."""
+    os.makedirs(DATA_DIR, exist_ok=True)
 
     csvs = [f for f in os.listdir(DATA_DIR)
             if f.endswith('.csv') and not f.endswith('_clean.csv')]
     if csvs:
         return os.path.join(DATA_DIR, csvs[0])
+
+    print("[DataLoader] No raw dataset found in data/ folder.")
+    print("[DataLoader] Attempting auto-download from Kaggle...\n")
+    _download_dataset()
+
+    csvs = [f for f in os.listdir(DATA_DIR)
+            if f.endswith('.csv') and not f.endswith('_clean.csv')]
+    if csvs:
+        return os.path.join(DATA_DIR, csvs[0])
+
     return None
 
 

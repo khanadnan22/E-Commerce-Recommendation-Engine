@@ -49,13 +49,18 @@ source venv/bin/activate  # Linux/Mac
 # 2. Install dependencies
 pip install -r requirements.txt
 
-# 3. Download dataset from Kaggle and place CSV in data/ folder
-mkdir -p data
-# → Place the downloaded CSV in data/
+# 3. Set up Kaggle API credentials (one-time)
+#    → Go to https://www.kaggle.com/settings
+#    → Click "Create New Token" under API section
+#    → Place the downloaded kaggle.json in ~/.kaggle/
 
-# 4. Launch web dashboard
+# 4. Launch web dashboard (dataset downloads automatically on first run)
 streamlit run app.py
 ```
+
+> **Note:** The dataset (~300MB) is automatically downloaded from Kaggle on the first run
+> using `kagglehub`. You need a free [Kaggle account](https://www.kaggle.com/account/login)
+> and an API token to enable auto-download.
 
 ## 📁 Project Structure
 
@@ -63,13 +68,14 @@ streamlit run app.py
 DS/
 ├── app.py                   # Streamlit web dashboard (8 pages)
 ├── recommendation_engine.py # Core ML engine (4 algorithms + evaluation)
-├── data_loader.py           # Data loading & preprocessing pipeline
+├── data_loader.py           # Data loading, preprocessing & auto-download
 ├── requirements.txt         # Python dependencies
 ├── .gitignore               # Git ignore rules
 ├── README.md                # This file
-└── data/
-    ├── products_clean.csv   # Preprocessed product catalog
-    └── interactions_clean.csv  # Preprocessed user-product interactions
+└── data/                    # Auto-generated on first run
+    ├── ratings_Electronics.csv  # Raw dataset (auto-downloaded from Kaggle)
+    ├── products_clean.csv       # Preprocessed product catalog
+    └── interactions_clean.csv   # Preprocessed user-product interactions
 ```
 
 ## 🧠 Algorithms
